@@ -1,0 +1,78 @@
+# ファイル名: .github/workflows/convert-docs.yml
+
+name: Pandoc Document Conversion
+run-name: ${{ github.actor }} is Running Pandoc, Upload Actions
+
+on:
+  # "main" ブランチに push されたときに実行
+  push:
+    branches: [ "main" ]
+  # 手動でも実行できるようにする
+  workflow_dispatch:
+
+jobs:
+  convert:
+    # 実行環境
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1. リポジトリのコードをチェックアウトする
+      - name: Check out repository
+        uses: actions/checkout@v4
+      # 2. 変換先のディレクトリを作成 (オプションだが推奨)
+      - name: Create Artifact Directory
+        run: mkdir -p artifact_output
+
+      # 3. GitHubのPandoc Converter のPDFへの変換アクションを実行する
+      - name: Convert Markdown to PDF
+        uses: docker://pandoc/extra:3.8
+
+        with:
+          args: >-
+            --output=artifact_output/specification.pdf
+            --standalone
+            --toc
+            --number-sections
+            -H style/pdf_custom.tex
+            specification.md
+
+      # 4. GitHubのPandoc Converter のHTMLへの変換アクションを実行する
+      - name: Convert Markdown to HTML
+        uses: docker://pandoc/extra:3.8
+        with:
+          args: >-
+            --output=artifact_output/specification.html
+            --standalone
+            --toc
+            --number-sections
+            -c style/pandoc.css
+            -c style/custom.css
+            --embed-resources
+            specification.md
+
+      # 5. PDF,HTMLアーティファクトのアップロード
+      - name: Upload PDF Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: specification-pdf,html
+          path: |
+            artifact_output/specification.pdf
+            artifact_output/specification.html
+
+      # 6. リリースノートにPDF,HTMLを添付
+      - name: Set current date and time as env
+        run: echo "RELEASE_TAG=QODE_document_$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+        env:
+          TZ: 'Asia/Tokyo'
+
+      - name: Create Release with Artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            artifact_output/specification.pdf
+            artifact_output/specification.html
+          tag: ${{ env.RELEASE_TAG }}
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}　
