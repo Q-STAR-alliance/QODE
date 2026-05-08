@@ -546,7 +546,7 @@ print(client) ->
 
 ```python
 from SDK import VariableGenerator, one_hot, XXXClient, solve
-from datatime import timedelta
+from datetime import timedelta
 
 gen = VariableGenerator()
 q = gen.array("Binary", 3)
@@ -716,8 +716,8 @@ print(result.best.time) -> datetime.timedelta(microseconds=27965)
 | Attribute | Return type |
 | :---- | :---- |
 | best | **Solution** |
-| client\_result | **Poly** |
-| execution\_time | list\[**Variable**\] |
+| client\_result | Solver/client result |
+| execution\_time | timedelta |
 | num\_solves | int |
 | response\_time | timedelta |
 | solutions | **SolutionList** |
